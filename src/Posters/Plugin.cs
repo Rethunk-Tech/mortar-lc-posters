@@ -58,6 +58,7 @@ public class Plugin : BaseUnityPlugin
         DontDestroyOnLoad(holder);
         holder.hideFlags = HideFlags.HideAndDontSave;
         runner = holder.AddComponent<Loader>();
+        Watch.Start(holder, Reload, Paths.PluginPath);
         Find();
         Log.LogInfo($"{MyPluginInfo.Name} {MyPluginInfo.Version} loaded {posters.Length} posters, {tips.Length} tips, {paintings.Length} paintings");
         var shared = SyncedConfig.For(this);
@@ -75,6 +76,29 @@ public class Plugin : BaseUnityPlugin
         hooks.Add(new Hook(typeof(RoundManager).GetMethod(nameof(RoundManager.SyncScrapValuesClientRpc)), ScrapSynced));
         hooks.Add(new Hook(typeof(GameNetworkManager).GetMethod("SaveItemsInShip", any), ItemsSaved));
         hooks.Add(new Hook(typeof(StartOfRound).GetMethod("LoadShipGrabbableItems", any), ItemsLoaded));
+    }
+
+    // New and changed pictures show straight away: the lists are read again and the ship and paintings redrawn.
+    private static void Reload(IReadOnlyCollection<string> changed)
+    {
+        if (!changed.Any(f => IsImage(f) || Path.GetExtension(f) == ""))
+        {
+            return;
+        }
+        Find();
+        foreach (string file in changed)
+        {
+            if (textures.Remove(file, out Texture2D old))
+            {
+                Destroy(old);
+            }
+        }
+        Log.LogInfo($"Found {posters.Length} posters, {tips.Length} tips, {paintings.Length} paintings");
+        Ship(lastSeed);
+        foreach (GrabbableObject item in FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None))
+        {
+            Paint(item);
+        }
     }
 
     private static bool IsImage(string file) =>
