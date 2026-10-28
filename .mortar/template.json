@@ -1,0 +1,16 @@
+{
+  "template": "Rethunk-Tech/mortar-bepinex5-template",
+  "ref": "main",
+  "name": "Posters",
+  "values": {
+    "audience": "everyone",
+    "categories": "mods|bepinex",
+    "description": "Your own posters, tips and paintings in the ship, from any poster or painting pack.",
+    "idPrefix": "tech.rethunk.mortar",
+    "modAuthor": "Rethunk Tech",
+    "repositoryUrl": "https://github.com/Rethunk-Tech/mortar-lc-posters",
+    "team": "Mortar"
+  },
+  "game": "lethal-company",
+  "templateIcon": "f41fd9e58316fde043d4817b4d73d2d379ea61022d80257df301ffe5e9d588f9"
+}
