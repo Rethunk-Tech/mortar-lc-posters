@@ -9,7 +9,7 @@ registries:
     url: https://nuget.windows10ce.com/nuget/v3/index.json
 updates:
   - package-ecosystem: nuget
-    directory: /
+    directory: /src/Posters
     registries:
       - bepinex
       - windows10ce
