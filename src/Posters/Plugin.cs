@@ -94,13 +94,7 @@ public class Plugin : BaseUnityPlugin
             }
         }
         Log.LogInfo($"Found {posters.Length} posters, {tips.Length} tips, {paintings.Length} paintings");
-        foreach (Material key in wanted.Keys.ToArray())
-        {
-            if (key == null)
-            {
-                wanted.Remove(key);
-            }
-        }
+        PruneDestroyed();
         Ship(lastSeed);
         foreach (GrabbableObject item in FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None))
         {
@@ -253,16 +247,19 @@ public class Plugin : BaseUnityPlugin
         Ship(randomSeed);
     }
 
+    // Unity-null (destroyed) keys are not C# null, so match them by ==.
+    private static void PruneDestroyed()
+    {
+        foreach (Material key in wanted.Keys.Where(k => k == null).ToArray())
+        {
+            wanted.Remove(key!);
+        }
+    }
+
     private static void Ship(int seed)
     {
         lastSeed = seed;
-        foreach (Material key in wanted.Keys.ToArray())
-        {
-            if (key == null)
-            {
-                wanted.Remove(key);
-            }
-        }
+        PruneDestroyed();
         var plane = GameObject.Find("HangarShip/Plane.001");
         if (plane == null)
         {
@@ -381,7 +378,7 @@ public class Plugin : BaseUnityPlugin
 
     private static Texture2D Fit(Texture2D full)
     {
-        var (width, height) = Pick.FitSize(full.width, full.height, MaxSide);
+        (int width, int height) = Pick.FitSize(full.width, full.height, MaxSide);
         if (width == full.width && height == full.height)
         {
             return full;
