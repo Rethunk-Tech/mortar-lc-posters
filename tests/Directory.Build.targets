@@ -1,0 +1,3 @@
+<Project>
+  <!-- These tests compile Pick.cs alone and must not pick up the game assemblies from the mod targets. -->
+</Project>

@@ -94,6 +94,13 @@ public class Plugin : BaseUnityPlugin
             }
         }
         Log.LogInfo($"Found {posters.Length} posters, {tips.Length} tips, {paintings.Length} paintings");
+        foreach (Material key in wanted.Keys.ToArray())
+        {
+            if (key == null)
+            {
+                wanted.Remove(key);
+            }
+        }
         Ship(lastSeed);
         foreach (GrabbableObject item in FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None))
         {
@@ -117,11 +124,12 @@ public class Plugin : BaseUnityPlugin
     // Sorted, so the same pick is the same picture for everyone with the same packs. A file reachable from both
     // layouts counts once.
     private static string[] Images(string kind, string oldPack, string oldKind) =>
-        Folders("mortar", kind).Concat(Folders(oldPack, oldKind))
-            .SelectMany(Directory.GetFiles)
-            .Where(IsImage)
-            .Distinct()
-            .OrderBy(f => Path.GetFileName(f), StringComparer.Ordinal)
+        Pick.Order(
+            Folders("mortar", kind).Concat(Folders(oldPack, oldKind))
+                .SelectMany(Directory.GetFiles)
+                .Where(IsImage)
+                .Distinct(),
+            Paths.PluginPath)
             .ToArray();
 
     private static IEnumerable<string> Folders(string parent, string kind) =>
@@ -213,7 +221,16 @@ public class Plugin : BaseUnityPlugin
         {
             return;
         }
-        Dictionary<string, string> pictures = ES3.Load<Dictionary<string, string>>(SaveKey, file);
+        Dictionary<string, string> pictures;
+        try
+        {
+            pictures = ES3.Load<Dictionary<string, string>>(SaveKey, file);
+        }
+        catch (Exception exception)
+        {
+            Log.LogWarning($"Could not load saved pictures from {file}: {exception.Message}");
+            return;
+        }
         foreach (GrabbableObject item in FindObjectsByType<GrabbableObject>(FindObjectsSortMode.None))
         {
             if (IsPainting(item) && pictures.TryGetValue(Where(item.transform.position), out string name))
@@ -239,6 +256,13 @@ public class Plugin : BaseUnityPlugin
     private static void Ship(int seed)
     {
         lastSeed = seed;
+        foreach (Material key in wanted.Keys.ToArray())
+        {
+            if (key == null)
+            {
+                wanted.Remove(key);
+            }
+        }
         var plane = GameObject.Find("HangarShip/Plane.001");
         if (plane == null)
         {
@@ -357,12 +381,11 @@ public class Plugin : BaseUnityPlugin
 
     private static Texture2D Fit(Texture2D full)
     {
-        int longest = Math.Max(full.width, full.height);
-        if (longest <= MaxSide)
+        var (width, height) = Pick.FitSize(full.width, full.height, MaxSide);
+        if (width == full.width && height == full.height)
         {
             return full;
         }
-        int width = full.width * MaxSide / longest, height = full.height * MaxSide / longest;
         var target = RenderTexture.GetTemporary(width, height);
         Graphics.Blit(full, target);
         RenderTexture previous = RenderTexture.active;
